@@ -1,0 +1,95 @@
+<script src="/node_modules/phaser-ce/build/phaser.min.js"></script>
+<script>
+window.onload = function() {
+    var game = new Phaser.Game(640, 360, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update });
+    var player;
+    var cursors;
+    function preload() {
+        game.load.image('player', 'sprites/player.png');
+        game.load.image('TestTiles', 'sprites/test-tiles.png');
+        game.load.tilemap('tiles', 'tilemaps/test.json', null, Phaser.Tilemap.TILED_JSON);
+
+    }
+    var layer;
+    function create() {
+        PIXI.scaleModes.DEFAULT = PIXI.scaleModes.NEAREST;
+        map = game.add.tilemap('tiles');
+        map.addTilesetImage('redbrick', 'TestTiles');
+        map.setCollision(1);
+        layer = map.createLayer('Tile Layer 1');
+        layer.resizeWorld();
+        cursors = game.input.keyboard.createCursorKeys();
+        game.physics.startSystem(Phaser.Physics.ARCADE);
+        player = game.add.sprite(32, 0, 'player');
+        game.physics.enable(player, Phaser.Physics.ARCADE);
+        player.body.collideWorldBounds=true;
+
+    }
+
+    var kcheck = true;
+    var heading = {};
+    var tween = false;
+    var frames = 0;
+    var frameCount = -15;
+    var lastKey = false;
+    var lastKeyReleased = false;
+    var leapDistance = 32;
+    function update() {
+        deltaTime = game.time.elapsed/1000;
+        game.physics.arcade.collide(player, layer,function(player, layer){
+        
+        });
+        player.body.velocity.x = 0;
+         player.body.velocity.y = 0;
+        if(cursors.left.isDown && kcheck){
+            heading = {x:-1, y: false}
+            kcheck = false;
+            frames = frameCount;
+            lastKey = cursors.left;
+        }
+
+        if(cursors.right.isDown && kcheck){
+            heading = {x: 1, y: false}
+            kcheck = false;
+            frames = frameCount;
+            lastKey = cursors.right;
+        }
+
+        if(cursors.up.isDown && kcheck){
+            heading = {x: false, y: -1}
+            kcheck = false;
+            frames = frameCount;
+            lastKey = cursors.up;
+        }
+
+        if(cursors.down.isDown && kcheck){
+            heading = {x: false, y: 1}
+            kcheck = false;
+            frames = frameCount;
+            lastKey = cursors.down;
+        }
+
+        if(lastKey && lastKey.isUp && !frames){
+            kcheck = true;
+        }
+
+        if(frames === 0){
+            heading = {};
+            player.body.position.x = Math.round(player.body.position.x/leapDistance)*leapDistance;
+            player.body.position.y = Math.round(player.body.position.y/leapDistance)*leapDistance;
+            frames = false;
+            console.log("x:"+player.body.x,"y:"+player.body.y);
+        }
+        if(typeof heading.x == 'number' && frames < 0){
+            player.body.velocity.x = (leapDistance*(60/-frameCount))*60*deltaTime*heading.x;
+            frames++;
+        }
+        if(typeof heading.y == 'number' && frames < 0){
+            player.body.velocity.y = (leapDistance*(60/-frameCount))*60*deltaTime*heading.y;
+            frames++;
+        }
+
+    }
+
+}
+</script>
