@@ -21,6 +21,7 @@ window.onload = function() {
         cursors = game.input.keyboard.createCursorKeys();
         game.physics.startSystem(Phaser.Physics.ARCADE);
         player = game.add.sprite(32, 0, 'player');
+        player.smoothed = false;
         game.physics.enable(player, Phaser.Physics.ARCADE);
         player.body.collideWorldBounds=true;
 
@@ -93,3 +94,13 @@ window.onload = function() {
 
 }
 </script>
+<style>
+canvas {
+    image-rendering: optimizeSpeed;             /* Older versions of FF          */
+    image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
+    image-rendering: -webkit-optimize-contrast; /* Safari                        */
+    image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
+    image-rendering: pixelated;                 /* Awesome future-browsers       */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
+}
+</style>
