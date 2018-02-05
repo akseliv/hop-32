@@ -12,6 +12,7 @@ window.onload = function() {
     }
     var layer;
     function create() {
+
         PIXI.scaleModes.DEFAULT = PIXI.scaleModes.NEAREST;
         map = game.add.tilemap('tiles');
         map.addTilesetImage('redbrick', 'TestTiles');
@@ -31,21 +32,26 @@ window.onload = function() {
     var heading = {};
     var tween = false;
     var frames = 0;
-    var frameCount = -15;
+    var keyDelayFrames = 0;
+    var keyDelayFramesCount = -10;
+    var frameCount = -10;
     var lastKey = false;
     var lastKeyReleased = false;
     var leapDistance = 32;
+    var snapGrid = 32;
+
     function update() {
         deltaTime = game.time.elapsed/1000;
         game.physics.arcade.collide(player, layer,function(player, layer){
-        
+            frames = 0;
         });
         player.body.velocity.x = 0;
-         player.body.velocity.y = 0;
+        player.body.velocity.y = 0;
         if(cursors.left.isDown && kcheck){
             heading = {x:-1, y: false}
             kcheck = false;
             frames = frameCount;
+            keyDelayFrames = keyDelayFramesCount;
             lastKey = cursors.left;
         }
 
@@ -53,13 +59,16 @@ window.onload = function() {
             heading = {x: 1, y: false}
             kcheck = false;
             frames = frameCount;
+            keyDelayFrames = keyDelayFramesCount;
             lastKey = cursors.right;
+            console.log("right move");
         }
 
         if(cursors.up.isDown && kcheck){
             heading = {x: false, y: -1}
             kcheck = false;
             frames = frameCount;
+            keyDelayFrames = keyDelayFramesCount;
             lastKey = cursors.up;
         }
 
@@ -67,17 +76,26 @@ window.onload = function() {
             heading = {x: false, y: 1}
             kcheck = false;
             frames = frameCount;
+            keyDelayFrames = keyDelayFramesCount;
             lastKey = cursors.down;
         }
-
-        if(lastKey && lastKey.isUp && !frames){
+        if(!frames && keyDelayFrames){
+            keyDelayFrames++;
+        }
+        if((lastKey && keyDelayFrames === 0)){
+            keyDelayFrames = false;
             kcheck = true;
+        }
+        if((lastKey.isUp && frames < -3 && !kcheck)){
+            keyDelayFrames = false;
+            kcheck = true;
+            console.log('timed');
         }
 
         if(frames === 0){
             heading = {};
-            player.body.position.x = Math.round(player.body.position.x/leapDistance)*leapDistance;
-            player.body.position.y = Math.round(player.body.position.y/leapDistance)*leapDistance;
+            player.body.position.x = Math.round(player.body.position.x/snapGrid)*snapGrid;
+            player.body.position.y = Math.round(player.body.position.y/snapGrid)*snapGrid;
             frames = false;
             console.log("x:"+player.body.x,"y:"+player.body.y);
         }
