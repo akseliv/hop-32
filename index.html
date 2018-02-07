@@ -1,30 +1,44 @@
 <script src="/node_modules/phaser-ce/build/phaser.min.js"></script>
 <script>
 window.onload = function() {
-    var game = new Phaser.Game(640, 360, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update });
+    var game = new Phaser.Game(640, 360, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update,render: render });
     var player;
     var cursors;
     function preload() {
         game.load.image('player', 'sprites/player.png');
+        game.load.image('platform', 'sprites/platform.png');
         game.load.image('TestTiles', 'sprites/test-tiles.png');
         game.load.tilemap('tiles', 'tilemaps/test.json', null, Phaser.Tilemap.TILED_JSON);
 
     }
     var layer;
+    var platforms;
     function create() {
-
+        game.time.advancedTiming = true;    
         PIXI.scaleModes.DEFAULT = PIXI.scaleModes.NEAREST;
         map = game.add.tilemap('tiles');
         map.addTilesetImage('redbrick', 'TestTiles');
         map.setCollision(1);
         layer = map.createLayer('Tile Layer 1');
         layer.resizeWorld();
+
         cursors = game.input.keyboard.createCursorKeys();
         game.physics.startSystem(Phaser.Physics.ARCADE);
-        player = game.add.sprite(32, 0, 'player');
+
+        platforms = [];
+        platforms[0] = game.add.sprite(128, 320, 'platform');
+        game.physics.enable(platforms[0], Phaser.Physics.ARCADE);
+        platforms[1] = game.add.sprite(256, 288, 'platform');
+        game.physics.enable(platforms[1], Phaser.Physics.ARCADE);
+
+        player = game.add.sprite(32, 288, 'player');
         player.smoothed = false;
         game.physics.enable(player, Phaser.Physics.ARCADE);
         player.body.collideWorldBounds=true;
+
+        platforms.map(function(plat){
+            console.log(plat);
+        });
 
     }
 
@@ -39,14 +53,43 @@ window.onload = function() {
     var lastKeyReleased = false;
     var leapDistance = 32;
     var snapGrid = 32;
+    var playerRides = false;
 
     function update() {
+        // get dT
         deltaTime = game.time.elapsed/1000;
+        // resets
+
+        // collisions
         game.physics.arcade.collide(player, layer,function(player, layer){
             frames = 0;
         });
-        player.body.velocity.x = 0;
-        player.body.velocity.y = 0;
+        var playerRideLastFrame = playerRides;
+        playerRides = false;
+        var overlaps = [];
+        platforms.map(function(plat){
+            game.physics.arcade.overlap(player,plat,function(player, platform){
+                overlaps.push(platform);
+                if(!playerRides && player.body.velocity.x === 0){
+                    platform.body.velocity.x = 64;
+                    playerRides = platform;
+                    console.log('entered platform');
+                }
+            });
+
+
+        });
+
+        if(playerRideLastFrame && overlaps.length === 0){
+            console.log('exited platform');
+            playerRides = false;
+        }
+
+        if(playerRides){
+            player.body.velocity.x = playerRides.body.velocity.x;
+        }
+
+
         if(cursors.left.isDown && kcheck){
             heading = {x:-1, y: false}
             kcheck = false;
@@ -94,20 +137,33 @@ window.onload = function() {
 
         if(frames === 0){
             heading = {};
-            player.body.position.x = Math.round(player.body.position.x/snapGrid)*snapGrid;
-            player.body.position.y = Math.round(player.body.position.y/snapGrid)*snapGrid;
+            snapToGrid();
             frames = false;
+            player.body.velocity.x = 0;
+            player.body.velocity.y = 0;
             console.log("x:"+player.body.x,"y:"+player.body.y);
+            console.log("landed");
         }
         if(typeof heading.x == 'number' && frames < 0){
-            player.body.velocity.x = (leapDistance*(60/-frameCount))*60*deltaTime*heading.x;
+            var rideVelocity = (playerRides) ? playerRides.body.velocity.x : 0;
+            player.body.velocity.x = ((leapDistance+rideVelocity)*(60/-frameCount))*60*deltaTime*heading.x;
             frames++;
         }
         if(typeof heading.y == 'number' && frames < 0){
-            player.body.velocity.y = (leapDistance*(60/-frameCount))*60*deltaTime*heading.y;
+            var rideVelocity = (playerRides) ? playerRides.body.velocity.y : 0;
+            player.body.velocity.y = ((leapDistance+rideVelocity)*(60/-frameCount))*60*deltaTime*heading.y;
             frames++;
         }
 
+    }
+
+    function render() {
+	    game.debug.text(game.time.fps, 2, 14, "#00ff00");
+    }
+
+    function snapToGrid(){
+        player.body.position.x = Math.round(player.body.position.x/snapGrid)*snapGrid;
+        player.body.position.y = Math.round(player.body.position.y/snapGrid)*snapGrid;
     }
 
 }
