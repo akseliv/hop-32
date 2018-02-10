@@ -8,7 +8,7 @@ window.onload = function() {
         game.load.image('player', 'sprites/player.png');
         game.load.image('platform', 'sprites/platform.png');
         game.load.image('TestTiles', 'sprites/test-tiles.png');
-        game.load.tilemap('tiles', 'tilemaps/test.json', null, Phaser.Tilemap.TILED_JSON);
+        game.load.tilemap('tiles', 'tilemaps/test.json?'+Date.now(), null, Phaser.Tilemap.TILED_JSON);
 
     }
     var map;
