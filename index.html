@@ -11,6 +11,7 @@ window.onload = function() {
         game.load.tilemap('tiles', 'tilemaps/test.json', null, Phaser.Tilemap.TILED_JSON);
 
     }
+    var map;
     var layer;
     var platforms;
     function create() {
@@ -54,74 +55,106 @@ window.onload = function() {
     var leapDistance = 32;
     var snapGrid = 32;
     var playerRides = false;
+    var deathFlag = false;
 
     function update() {
         // get dT
         deltaTime = game.time.elapsed/1000;
         // resets
-
+        player.tint = 0xffffff;
         // collisions
         game.physics.arcade.collide(player, layer,function(player, layer){
             frames = 0;
+            player.body.velocity.x = 0;
+            player.body.velocity.y = 0;
         });
-        var playerRideLastFrame = playerRides;
+
+        var playerRideLastFrame = (playerRides) ? true: false;
         playerRides = false;
         var overlaps = [];
+
         platforms.map(function(plat){
             game.physics.arcade.overlap(player,plat,function(player, platform){
                 overlaps.push(platform);
-                if(!playerRides && player.body.velocity.x === 0){
-                    platform.body.velocity.x = 64;
+                if(!playerRides && player.body.velocity.x === 0 && player.body.velocity.y === 0 && player.body.x === platform.body.x && player.body.y === platform.body.y){
+                    platform.body.velocity.x = 128;
                     playerRides = platform;
+                    deathFlag = false;
                     console.log('entered platform');
+
                 }
             });
+            game.physics.arcade.collide(plat, layer,function(platform, layer){
+                platform.destroy();
+            })
 
 
         });
 
+        if(!playerRides && deathFlag){
+            player.destroy();
+        }
         if(playerRideLastFrame && overlaps.length === 0){
             console.log('exited platform');
-            playerRides = false;
         }
+
 
         if(playerRides){
             player.body.velocity.x = playerRides.body.velocity.x;
+            player.body.velocity.y = playerRides.body.velocity.y;
+        }
+        
+        if(frames === 0){
+
+            heading = {};
+            snapToGrid();
+            frames = false;
+            player.body.velocity.x = 0;
+            player.body.velocity.y = 0;
+            var landingTile = map.getTileWorldXY(player.body.x,player.body.y,32,32,layer);
+            if(!landingTile){
+                deathFlag = true;
+            }
+            console.log("x:"+player.body.x,"y:"+player.body.y);
+            console.log("landed");
+
         }
 
-
         if(cursors.left.isDown && kcheck){
+
             heading = {x:-1, y: false}
             kcheck = false;
             frames = frameCount;
             keyDelayFrames = keyDelayFramesCount;
             lastKey = cursors.left;
-        }
 
-        if(cursors.right.isDown && kcheck){
+        } else if (cursors.right.isDown && kcheck){
+
             heading = {x: 1, y: false}
             kcheck = false;
             frames = frameCount;
             keyDelayFrames = keyDelayFramesCount;
             lastKey = cursors.right;
             console.log("right move");
-        }
 
-        if(cursors.up.isDown && kcheck){
+        } else if (cursors.up.isDown && kcheck){
+
             heading = {x: false, y: -1}
             kcheck = false;
             frames = frameCount;
             keyDelayFrames = keyDelayFramesCount;
             lastKey = cursors.up;
-        }
 
-        if(cursors.down.isDown && kcheck){
+        } else if (cursors.down.isDown && kcheck){
+
             heading = {x: false, y: 1}
             kcheck = false;
             frames = frameCount;
             keyDelayFrames = keyDelayFramesCount;
             lastKey = cursors.down;
+
         }
+
         if(!frames && keyDelayFrames){
             keyDelayFrames++;
         }
@@ -129,24 +162,17 @@ window.onload = function() {
             keyDelayFrames = false;
             kcheck = true;
         }
-        if((lastKey.isUp && frames < -3 && !kcheck)){
+        if((lastKey.isUp && frames < -2 && !kcheck)){
             keyDelayFrames = false;
             kcheck = true;
             console.log('timed');
+            player.tint = 0xfff333;
         }
 
-        if(frames === 0){
-            heading = {};
-            snapToGrid();
-            frames = false;
-            player.body.velocity.x = 0;
-            player.body.velocity.y = 0;
-            console.log("x:"+player.body.x,"y:"+player.body.y);
-            console.log("landed");
-        }
+
         if(typeof heading.x == 'number' && frames < 0){
             var rideVelocity = (playerRides) ? playerRides.body.velocity.x : 0;
-            player.body.velocity.x = ((leapDistance+rideVelocity)*(60/-frameCount))*60*deltaTime*heading.x;
+            player.body.velocity.x = rideVelocity+((leapDistance)*(60/-frameCount))*60*deltaTime*heading.x;
             frames++;
         }
         if(typeof heading.y == 'number' && frames < 0){
