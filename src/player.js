@@ -17,14 +17,15 @@ define(['game'],function(game) {
         leapDistance: 32,
         snapGrid: 32,
 
-        create: function(){
+        create: function(x,y){
             
-            this.sprite = game.get().add.sprite(32, 288, 'player');
+            this.sprite = game.get().add.sprite(x, y, 'player');
             this.sprite.smoothed = false;
             game.get().physics.enable(this.sprite, Phaser.Physics.ARCADE);
             this.sprite.body.collideWorldBounds=true;
 
             this.cursors = game.get().input.keyboard.createCursorKeys();
+            return player;
         },
 
         update: function(){

@@ -1,4 +1,4 @@
-define(['require', 'player'],function(require, player){
+define(['require', 'player', 'tilemap', 'platform'],function(require, player, tilemap, platform){
     let main = {
         game: require('game'),
         preload: function(){
@@ -10,7 +10,10 @@ define(['require', 'player'],function(require, player){
         },
 
         create: function(){
-            player.create();
+            tilemap.create();
+            player.create(32,288);
+            let plat = platform.create();
+            console.log(plat);
             this.game.time.advancedTiming = true;    
             PIXI.scaleModes.DEFAULT = PIXI.scaleModes.NEAREST;
             this.game.physics.startSystem(Phaser.Physics.ARCADE);
